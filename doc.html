@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Zenith</title>
+  <link rel="icon" href="logo.png">
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+  <main>
+    <p><a href="index.html">← Zenith</a></p>
+    <div id="doc">Loading…</div>
+  </main>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/dompurify/dist/purify.min.js"></script>
+  <script>
+    const ALLOWED = { 'privacy.md': 1, 'terms.md': 1 };
+    const doc = document.getElementById('doc');
+    const file = new URLSearchParams(location.search).get('f');
+    if (!file || !ALLOWED[file]) {
+      doc.textContent = 'Document not found.';
+    } else {
+      fetch(file)
+        .then(r => { if (!r.ok) throw r.status; return r.text(); })
+        .then(text => {
+          doc.innerHTML = DOMPurify.sanitize(marked.parse(text));
+          const h1 = doc.querySelector('h1');
+          if (h1) document.title = h1.textContent;
+        })
+        .catch(() => { doc.textContent = 'Could not load this document.'; });
+    }
+  </script>
+</body>
+
+</html>

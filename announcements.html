@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Zenith Announcements</title>
+  <link rel="icon" href="logo.png">
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+  <main>
+    <p><a href="index.html">← Zenith</a></p>
+    <h1>Announcements</h1>
+    <div id="list">Loading…</div>
+    <article id="post" hidden></article>
+  </main>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/dompurify/dist/purify.min.js"></script>
+  <script>
+    // announcements.txt: one "date | title | file.md" per line. #file opens one.
+    const list = document.getElementById('list'), post = document.getElementById('post');
+    async function show() {
+      const file = decodeURIComponent(location.hash.slice(1));
+      list.hidden = !!file; post.hidden = !file;
+      if (!file) return;
+      post.innerHTML = '…';
+      try {
+        const r = await fetch(file);
+        if (!r.ok) throw r.status;
+        post.innerHTML = DOMPurify.sanitize(marked.parse(await r.text()));
+      } catch { post.textContent = 'Could not load this announcement.'; }
+    }
+    fetch('announcements.txt')
+      .then(r => r.ok ? r.text() : Promise.reject(r.status))
+      .then(text => {
+        const items = text.split('\n').map(l => l.split('|').map(p => p.trim()))
+          .filter(p => p.length == 3 && /^\d{4}-\d{2}-\d{2}/.test(p[0]) && p[1] && p[2])
+          .sort((a, b) => b[0].localeCompare(a[0]));
+        list.innerHTML = items.length ? '' : 'No announcements yet.';
+        for (const [date, title, file] of items) {
+          const p = document.createElement('p'), a = document.createElement('a');
+          a.href = '#' + encodeURIComponent(file); a.textContent = title;
+          p.append(a, ' ', Object.assign(document.createElement('small'), { textContent: date }));
+          list.append(p);
+        }
+      })
+      .catch(() => { list.textContent = 'Could not load announcements.'; });
+    addEventListener('hashchange', show); show();
+  </script>
+</body>
+
+</html>
